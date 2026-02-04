@@ -1,0 +1,258 @@
+document.addEventListener('DOMContentLoaded', () => {
+    console.log("🟢 Iniciando sistema...");
+
+    // --- REFERENCIAS AL HTML ---
+    const proyectoSelect = document.getElementById('proyectoSelect');
+    const casaSelect = document.getElementById('casaSelect');
+    
+    // Selectores de los nuevos catálogos
+    const recintoSelect = document.getElementById('recintoSelect');
+    const familiaSelect = document.getElementById('familiaSelect');
+    const subfamiliaSelect = document.getElementById('subfamiliaSelect');
+    const responsableSelect = document.getElementById('responsableSelect');
+    const ejecutanteSelect = document.getElementById('ejecutanteSelect');
+
+    // --- CARGA INICIAL ---
+    cargarProyectos();
+    cargarListasMaestras(); 
+
+    // =====================================================
+    // 1. EVENTO: CAMBIO DE PROYECTO -> CARGAR CASAS
+    // =====================================================
+    proyectoSelect.addEventListener('change', async (e) => {
+        const idProyecto = e.target.value;
+        
+        // Resetear selector de casas
+        casaSelect.innerHTML = '<option value="">Cargando...</option>';
+        casaSelect.disabled = true;
+
+        // Limpiar inputs automáticos
+        limpiarInfoCasa();
+
+        if (!idProyecto) {
+            casaSelect.innerHTML = '<option value="">Seleccione Proyecto primero</option>';
+            return;
+        }
+
+        try {
+            const res = await fetch(`/api/casas/${idProyecto}`);
+            const casas = await res.json();
+            
+            casaSelect.innerHTML = '<option value="">Seleccione Vivienda...</option>';
+            
+            if (casas.length === 0) {
+                alert("⚠️ Este proyecto no tiene casas cargadas.");
+            }
+
+            casas.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c.id_casa; // Valor interno (ID numérico)
+
+                // --- GUARDAR DATOS OCULTOS (DATASET) ---
+                opt.dataset.modelo = c.modelo || "";
+                opt.dataset.tren = c.agrupacion || ""; // Aquí va la Manzana/Torre
+                opt.dataset.orientacion = c.orientacion || "";
+                opt.dataset.fecha = c.fecha_entrega || "";
+                
+                // --- VISUALIZACIÓN LIMPIA (LO QUE PEDISTE) ---
+                // Solo mostramos el número/letra (ej: "106", "D")
+                opt.textContent = c.id_original; 
+                
+                casaSelect.appendChild(opt);
+            });
+            casaSelect.disabled = false;
+        } catch (error) {
+            console.error(error);
+            alert("❌ Error al cargar casas");
+            casaSelect.innerHTML = '<option value="">Error de conexión</option>';
+        }
+    });
+
+    // =====================================================
+    // 2. EVENTO: SELECCIÓN DE CASA -> LLENAR INFO AUTOMÁTICA
+    // =====================================================
+    casaSelect.addEventListener('change', (e) => {
+        const opt = e.target.selectedOptions[0];
+        
+        limpiarInfoCasa(); // Limpiamos primero por si acaso
+
+        if (opt && opt.value) {
+            // Rellenar campos grises
+            document.getElementById('infoModelo').value = opt.dataset.modelo;
+            document.getElementById('infoTren').value = opt.dataset.tren; // Muestra la Manzana/Torre aquí
+            document.getElementById('infoOrientacion').value = opt.dataset.orientacion;
+            
+            // --- CORRECCIÓN DE FECHA ---
+            const fechaRaw = opt.dataset.fecha;
+            
+            if (fechaRaw && fechaRaw !== "null" && fechaRaw !== "") {
+                // Cortamos la fecha en la 'T' para quedarnos solo con YYYY-MM-DD
+                // Ejemplo: "2025-05-16T00:00:00.000Z" -> "2025-05-16"
+                const fechaCorta = fechaRaw.split('T')[0];
+                document.getElementById('infoFecha').value = fechaCorta;
+                document.getElementById('infoGarantia').value = "Vigente"; // Lógica simple
+            } else {
+                document.getElementById('infoFecha').value = "---";
+                document.getElementById('infoGarantia').value = "---";
+            }
+        }
+    });
+
+    // =====================================================
+    // 3. EVENTO: CAMBIO DE FAMILIA -> CARGAR SUBFAMILIAS
+    // =====================================================
+    familiaSelect.addEventListener('change', async (e) => {
+        const idFamilia = e.target.value;
+        
+        subfamiliaSelect.innerHTML = '<option value="">Cargando...</option>';
+        subfamiliaSelect.disabled = true;
+
+        if(!idFamilia) {
+            subfamiliaSelect.innerHTML = '<option value="">Seleccione Familia primero</option>';
+            return;
+        }
+
+        try {
+            const res = await fetch(`/api/subfamilias/${idFamilia}`);
+            const subs = await res.json();
+
+            subfamiliaSelect.innerHTML = '<option value="">Seleccione Subfamilia...</option>';
+            
+            subs.forEach(s => {
+                const opt = document.createElement('option');
+                // Guardamos el NOMBRE como valor final para la BD
+                opt.value = s.nombre_subfamilia; 
+                opt.textContent = s.nombre_subfamilia;
+                subfamiliaSelect.appendChild(opt);
+            });
+            subfamiliaSelect.disabled = false;
+        } catch (error) {
+            console.error("Error cargando subfamilias:", error);
+            subfamiliaSelect.innerHTML = '<option value="">Error</option>';
+        }
+    });
+
+    // =====================================================
+    // 4. FUNCIONES DE CARGA (PROYECTOS Y LISTAS MAESTRAS)
+    // =====================================================
+
+    async function cargarProyectos() {
+        try {
+            const res = await fetch('/api/proyectos');
+            const lista = await res.json();
+            proyectoSelect.innerHTML = '<option value="">Seleccione Proyecto...</option>';
+            lista.forEach(p => {
+                proyectoSelect.innerHTML += `<option value="${p.id_proyecto}">${p.nombre_proyecto}</option>`;
+            });
+        } catch (error) {
+            console.error("Error proyectos:", error);
+        }
+    }
+
+    async function cargarListasMaestras() {
+        try {
+            // A. Recintos
+            const resRec = await fetch('/api/recintos');
+            const recintos = await resRec.json();
+            recintoSelect.innerHTML = '<option value="">Seleccione...</option>';
+            recintos.forEach(r => {
+                recintoSelect.innerHTML += `<option value="${r.nombre_recinto}">${r.nombre_recinto}</option>`;
+            });
+
+            // B. Familias
+            const resFam = await fetch('/api/familias');
+            const familias = await resFam.json();
+            familiaSelect.innerHTML = '<option value="">Seleccione...</option>';
+            familias.forEach(f => {
+                // VALUE = ID (para buscar subfamilias), TEXT = Nombre
+                familiaSelect.innerHTML += `<option value="${f.id_familia}">${f.nombre_familia}</option>`; 
+            });
+
+            // C. Responsables
+            const resResp = await fetch('/api/responsables');
+            const responsables = await resResp.json();
+            responsableSelect.innerHTML = '<option value="">Seleccione...</option>';
+            responsables.forEach(r => {
+                responsableSelect.innerHTML += `<option value="${r.nombre_responsable}">${r.nombre_responsable}</option>`;
+            });
+
+            // D. Ejecutantes (Si existe en el HTML)
+            if(ejecutanteSelect) {
+                const resEjec = await fetch('/api/ejecutantes');
+                const ejecutantes = await resEjec.json();
+                ejecutanteSelect.innerHTML = '<option value="">Seleccione...</option>';
+                ejecutantes.forEach(e => {
+                    ejecutanteSelect.innerHTML += `<option value="${e.id_ejecutante}">${e.nombre_ejecutante}</option>`;
+                });
+            }
+
+        } catch (error) {
+            console.error("Error cargando listas maestras:", error);
+        }
+    }
+
+    // Función auxiliar para limpiar inputs
+    function limpiarInfoCasa() {
+        document.getElementById('infoModelo').value = "";
+        document.getElementById('infoTren').value = "";
+        document.getElementById('infoOrientacion').value = "";
+        document.getElementById('infoFecha').value = "";
+        document.getElementById('infoGarantia').value = "";
+    }
+
+    // =====================================================
+    // 5. ENVIAR FORMULARIO (SUBMIT)
+    // =====================================================
+    const form = document.querySelector('form');
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        // Recopilar datos
+        const data = {
+            id_casa: casaSelect.value,
+            nombre_cliente: document.getElementById('nombreCliente').value,
+            contacto: document.getElementById('contactoCliente').value,
+            
+            estado_registro: document.getElementById('estadoRegistro').value,
+            origen: document.getElementById('origenSolicitud').value,
+            
+            // OJO: De Familia enviamos el TEXTO seleccionado (para registro histórico)
+            familia_txt: familiaSelect.options[familiaSelect.selectedIndex].text,
+            subfamilia_txt: subfamiliaSelect.value,
+            recinto_txt: recintoSelect.value,
+            
+            comentarios: document.getElementById('comentarios').value,
+            fecha_levantamiento: document.getElementById('fechaLevantamiento').value,
+            fecha_visita: document.getElementById('fechaVisita').value,
+            responsable_txt: responsableSelect.value,
+            acciones: document.getElementById('accionesObservaciones').value,
+            
+            // Datos Tarea
+            tarea_descripcion: document.getElementById('descTarea').value,
+            fecha_inicio: document.getElementById('fechaInicio').value,
+            fecha_termino: document.getElementById('fechaTermino').value,
+            horas_dia: document.getElementById('horasDia').value,
+            id_ejecutante: ejecutanteSelect.value || null
+        };
+
+        if(!data.id_casa) return alert("❌ Por favor selecciona una vivienda.");
+
+        try {
+            const res = await fetch('/api/guardar', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            if(res.ok) {
+                alert("✅ ¡Registro Guardado Correctamente!");
+                window.location.reload();
+            } else {
+                alert("❌ Hubo un error al guardar.");
+            }
+        } catch (error) {
+            console.error(error);
+            alert("❌ Error de conexión con el servidor.");
+        }
+    });
+});

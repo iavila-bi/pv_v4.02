@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inicio | Sistema PostVenta</title>
+    <style>
+        /* --- VARIABLES DE COLORES (PALETA AZUL/GRIS) --- */
+        :root {
+            /* Modo Claro */
+            --bg-body: #f0f4f8; /* Un gris azulado muy suave */
+            --bg-card: rgba(255, 255, 255, 0.85); /* Semitransparente para efecto vidrio */
+            --text-main: #2c3e50;
+            --text-secondary: #7f8c8d;
+            --accent-blue: #2980b9;
+            --accent-glow: rgba(41, 128, 185, 0.3); /* Color de las manchas de fondo */
+            --shadow: rgba(2, 0, 47, 0.1);
+            --border: #e1e4e8;
+        }
+
+        /* Modo Oscuro */
+        body.dark-mode {
+            --bg-body: #0f1115; /* Casi negro */
+            --bg-card: rgba(44, 53, 71, 0.85);
+            --text-main: #ecf0f1;
+            --text-secondary: #bdc3c7;
+            --accent-blue: #3498db;
+            --accent-glow: rgba(52, 152, 219, 0.15); /* Brillo azul más sutil en oscuro */
+            --shadow: rgba(0, 3, 52, 0.5);
+            --border: #2c3e50;
+        }
+
+        /* --- ESTILOS GENERALES --- */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow: hidden; /* Para que las formas de fondo no generen scroll */
+            transition: background-color 0.4s ease, color 0.4s ease;
+            position: relative;
+        }
+
+        /* --- FONDO ANIMADO (NUEVO DETALLE AZUL) --- */
+        .background-shapes {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1; /* Detrás de todo */
+            overflow: hidden;
+        }
+
+        .shape {
+            position: absolute;
+            border-radius: 50%;
+            background: var(--accent-glow);
+            filter: blur(80px); /* Difuminado fuerte para que sea sutil */
+            animation: float 10s infinite ease-in-out alternate;
+        }
+
+        /* Mancha azul 1 (Arriba izquierda) */
+        .shape-1 {
+            width: 500px;
+            height: 500px;
+            top: -100px;
+            left: -100px;
+            animation-delay: 0s;
+        }
+
+        /* Mancha azul 2 (Abajo derecha) */
+        .shape-2 {
+            width: 600px;
+            height: 600px;
+            bottom: -150px;
+            right: -100px;
+            background: var(--accent-glow);
+            animation-delay: 5s;
+        }
+
+        /* Mancha pequeña central */
+        .shape-3 {
+            width: 300px;
+            height: 300px;
+            top: 40%;
+            left: 60%;
+            opacity: 0.6;
+            animation-duration: 15s;
+        }
+
+        @keyframes float {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(20px, 40px) scale(1.1); }
+        }
+
+        /* --- BOTÓN MODO OSCURO (FLOTANTE) --- */
+        .theme-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            cursor: pointer;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 10px var(--shadow);
+            transition: transform 0.3s ease, background 0.3s;
+            backdrop-filter: blur(10px); /* Efecto vidrio */
+            z-index: 10;
+        }
+
+        .theme-toggle:hover {
+            transform: rotate(20deg) scale(1.1);
+        }
+
+        /* --- CONTENEDOR PRINCIPAL --- */
+        .container {
+            text-align: center;
+            animation: fadeIn 1s ease-in-out;
+            max-width: 900px;
+            width: 90%;
+            z-index: 1; /* Asegura que esté sobre el fondo */
+        }
+
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            font-weight: 800;
+            letter-spacing: -1px;
+            background: linear-gradient(135deg, var(--text-main) 0%, var(--accent-blue) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent; /* Texto con degradado */
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            font-weight: 800;
+            letter-spacing: -1px;
+            background: linear-gradient(135deg, var(--text-main) 0%, var(--accent-blue) 100%);
+            -webkit-background-clip: text;  /* <--- Esta ya la tienes */
+            background-clip: text;          /* <--- AGREGA ESTA LÍNEA JUSTO DEBAJO */
+            -webkit-text-fill-color: transparent; 
+        }
+
+        p.subtitle {
+            color: var(--text-secondary);
+            font-size: 1.2rem;
+            margin-bottom: 60px;
+        }
+
+        /* --- GRID DE OPCIONES --- */
+        .menu-grid {
+            display: flex;
+            gap: 30px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        /* --- TARJETAS (CARD) --- */
+        .card {
+            background-color: var(--bg-card);
+            backdrop-filter: blur(12px); /* EFECTO VIDRIO ESMERILADO */
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 40px;
+            width: 260px;
+            text-decoration: none;
+            color: var(--text-main);
+            box-shadow: 0 10px 30px var(--shadow);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            cursor: pointer;
+        }
+
+        .card:hover {
+            transform: translateY(-15px) scale(1.02);
+            box-shadow: 0 25px 50px rgba(41, 128, 185, 0.2); /* Sombra azulada al flotar */
+            border-color: var(--accent-blue);
+        }
+
+        .card-icon {
+            font-size: 4.5rem;
+            margin-bottom: 25px;
+            display: block;
+            transition: transform 0.3s;
+            filter: drop-shadow(0 5px 10px rgba(0,0,0,0.1));
+        }
+
+        .card:hover .card-icon {
+            transform: scale(1.1) rotate(5deg);
+        }
+
+        .card h2 {
+            font-size: 1.6rem;
+            margin-bottom: 15px;
+            color: var(--accent-blue);
+            font-weight: 700;
+        }
+
+        .card p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        /* --- FOOTER --- */
+        footer {
+            margin-top: 80px;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            opacity: 0.6;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="background-shapes">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+        <div class="shape shape-3"></div>
+    </div>
+
+    <button class="theme-toggle" id="themeBtn" title="Cambiar tema">
+        🌙
+    </button>
+
+    <div class="container">
+        <h1>Sistema PostVenta</h1>
+        <p class="subtitle">Gestión Integral de Propietarios | Grupo Patagual</p>
+
+        <div class="menu-grid">
+            
+            <a href="registro_familia.html" class="card">
+                <span class="card-icon">📝</span>
+                <h2>Nuevo registro</h2>
+                <p>Ingresar nuevo registro de familia.</p>
+            </a>
+
+            <a href="historico.html" class="card">
+                <span class="card-icon">📊</span>
+                <h2>Histórico</h2>
+                <p>Revisar estado de familias, garantías y registros pasados.</p>
+            </a>
+
+        </div>
+
+        <footer>
+            &copy; 2026 Grupo Patagual - Área de PostVenta
+        </footer>
+    </div>
+
+    <script>
+        // LÓGICA DE TEMA (DARK/LIGHT)
+        const btn = document.getElementById('themeBtn');
+        const body = document.body;
+
+        // Recuperar tema guardado
+        const currentTheme = localStorage.getItem('theme');
+        if (currentTheme === 'dark') {
+            body.classList.add('dark-mode');
+            btn.textContent = '☀️';
+        }
+
+        btn.addEventListener('click', () => {
+            body.classList.toggle('dark-mode');
+            if (body.classList.contains('dark-mode')) {
+                btn.textContent = '☀️';
+                localStorage.setItem('theme', 'dark');
+            } else {
+                btn.textContent = '🌙';
+                localStorage.setItem('theme', 'light');
+            }
+        });
+    </script>
+</body>
+</html>
